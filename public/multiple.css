@@ -68,7 +68,7 @@ textarea {
 }
 
 .upload-btn:hover {
-    background-color: #2980b9;
+    background-color: #000000;
 }
 
 #clearBtn:hover {
@@ -122,7 +122,7 @@ textarea {
 
 .copy-all-btn {
     padding: 0.5rem 1rem;
-    background-color: #3498db;
+    background-color: #000000;
     color: white;
     border: none;
     border-radius: 5px;
@@ -131,7 +131,7 @@ textarea {
 }
 
 .copy-all-btn:hover {
-    background-color: #2980b9;
+    background-color: #000000;
 }
 
 .result-table-container {
@@ -162,7 +162,7 @@ textarea {
 
 .copy-btn {
     padding: 0.5rem 1rem;
-    background-color: #3498db;
+    background-color: #000000;
     color: white;
     border: none;
     border-radius: 5px;
@@ -171,7 +171,7 @@ textarea {
 }
 
 .copy-btn:hover {
-    background-color: #2980b9;
+    background-color: #000000;
 }
 
 .action-buttons {
@@ -186,7 +186,7 @@ textarea {
     align-items: center;
     gap: 0.5rem;
     padding: 0.8rem 1.5rem;
-    background-color: #3498db;
+    background-color: #000000;
     color: white;
     border: none;
     border-radius: 5px;
@@ -195,7 +195,7 @@ textarea {
 }
 
 .action-buttons button:hover {
-    background-color: #2980b9;
+    background-color: #000000;
 }
 
 .download-btn {
@@ -215,7 +215,7 @@ textarea {
 
 .bottom-nav button {
     padding: 0.8rem 1.5rem;
-    background-color: #3498db;
+    background-color: #000000;
     color: white;
     border: none;
     border-radius: 5px;
@@ -225,7 +225,7 @@ textarea {
 }
 
 .bottom-nav button:hover {
-    background-color: #2980b9;
+    background-color: #000000;
 }
 
 /* 알림 메시지 스타일 */
@@ -319,7 +319,7 @@ textarea {
   }
 
 .password-buttons .submit-btn {
-    background-color: #007bff;
+    background-color: #000000;
     color: white;
   }
 
@@ -339,7 +339,7 @@ textarea {
 
 .login-btn {
     padding: 6px 12px;
-    background-color: #4c6ef5;
+    background-color: #000000;
     color: white;
     border: none;
     border-radius: 4px;
@@ -351,7 +351,7 @@ textarea {
 }
 
 .login-btn:hover {
-    background-color: #3b5bdb;
+    background-color: #000000;
 }
 
 .logout-btn {
@@ -369,12 +369,12 @@ textarea {
 .user-name {
     font-weight: bold;
     margin-right: 10px;
-    color: #4c6ef5;
+    color: #000000;
 }
 
 .admin-badge {
     display: inline-block;
-    background-color: #4c6ef5;
+    background-color: #000000;
     color: white;
     font-size: 12px;
     padding: 2px 5px;

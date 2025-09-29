@@ -20,13 +20,13 @@
 
 .header-icon {
   font-size: 28px;
-  color: #1877f2;
+  color: #000000;
 }
 
 .header-text {
   font-size: 28px;
   font-weight: bold;
-  color: #1877f2;
+  color: #000000;
 }
 
 .header-subtitle {
@@ -38,7 +38,7 @@
 }
 
 .header-subtitle:hover {
-  color: #1877f2;
+  color: #000000;
 }
 
 /* 정보 카드 스타일 */
@@ -67,7 +67,7 @@
 }
 
 .info-label {
-  color: #1877f2;
+  color: #000000;
   font-weight: bold;
   font-size: 16px;
 }
@@ -78,7 +78,7 @@
 }
 
 .level-date {
-  color: #1a8cff;
+  color: #000000;
   font-weight: 500;
 }
 
@@ -103,12 +103,12 @@
 }
 
 .dashboard-table thead tr {
-  background: #1877f2;
+  background: #000000;
   color: #fff;
 }
 
 .dashboard-table th {
-  background: #1877f2;
+  background: #000000;
   color: #fff;
   font-weight: 500;
   text-align: center;
@@ -159,7 +159,7 @@
 /* 버튼 스타일 */
 .dashboard-table .edit-btn {
   background: #e3e8f0;
-  color: #1877f2;
+  color: #000000;
   border: none;
   border-radius: 5px;
   padding: 8px 16px;
@@ -212,7 +212,7 @@
 
 /* 링크 스타일 */
 .dashboard-table .url-link {
-  color: #1877f2;
+  color: #000000;
   text-decoration: none;
   cursor: pointer;
   word-break: break-all;
@@ -221,7 +221,7 @@
 
 
 .dashboard-table .url-link:hover {
-  color: #0d5ab9;
+  color: #000000;
   text-decoration: underline;
 }
 
@@ -315,7 +315,7 @@
     bottom: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background-color: #1877f2;
+    background-color: #000000;
     color: white;
     padding: 12px 24px;
     border-radius: 8px;
@@ -364,7 +364,7 @@
 }
 
 .detail-item strong {
-    color: #1877f2;
+    color: #000000;
     margin-right: 8px;
 }
 
@@ -417,7 +417,7 @@
 .modal-title {
     font-size: 20px;
     font-weight: bold;
-    color: #1877f2;
+    color: #000000;
 }
 
 .modal-close {
@@ -455,7 +455,7 @@
 }
 
 .detail-value.highlight {
-    color: #1877f2;
+    color: #000000;
     font-weight: bold;
 }
 
@@ -463,7 +463,7 @@
     margin-left: auto;
     padding: 8px 16px;
     background: #e3e8f0;
-    color: #1877f2;
+    color: #000000;
     text-decoration: none;
     border-radius: 6px;
     font-size: 15px;
@@ -480,7 +480,7 @@
   margin-left: auto;
   padding: 8px 16px;
   background: #e3e8f0;
-  color: #1877f2;
+  color: #000000;
   border: none;
   border-radius: 6px;
   font-size: 14px;
@@ -517,7 +517,7 @@
 
 .download-excel-btn {
   padding: 0.5rem 1rem;
-  background-color: #3498db;
+  background-color: #000000;
   color: white;
   border: none;
   border-radius: 5px;
@@ -526,7 +526,7 @@
   transition: background-color 0.3s;
 }
 .download-excel-btn:hover {
-  background-color: #217dbb;
+  background-color: #000000;
 }
 
 .dashboard-table td,
@@ -538,7 +538,7 @@
 /* 사용자 배지 스타일 통일 */
 .user-badge {
   display: inline-block;
-  background-color: #4c6ef5;
+  background-color: #000000;
   color: white;
   font-size: 13px;
   padding: 4px 10px;
@@ -549,7 +549,7 @@
 }
 
 .admin-page-btn {
-  background-color: #4c6ef5;
+  background-color: #000000;
   color: white;
   border: none;
   border-radius: 4px;
@@ -562,7 +562,7 @@
 }
 
 .admin-page-btn:hover {
-  background-color: #3b5bdb;
+  background-color: #000000;
   transform: translateY(-2px);
   box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
 }
