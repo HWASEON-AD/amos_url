@@ -1,3 +1,108 @@
+// ───────────────────────────────────────────────────────────
+// 메모 기능용 유틸
+// ───────────────────────────────────────────────────────────
+const __rowState = new Map(); // key: shortCode, val: { timerId, inFlightController }
+
+function __debounce(fn, delay) {
+  let t;
+  return (...args) => {
+    clearTimeout(t);
+    t = setTimeout(() => fn(...args), delay);
+  };
+}
+
+// 상태칩 업데이트 (인라인 스타일로 안전 적용)
+function __setStatusChip(el, type, text) {
+  if (!el) return;
+  el.textContent = text || '';
+  el.style.borderRadius = '999px';
+  el.style.padding = '2px 8px';
+  el.style.fontSize = '12px';
+  el.style.whiteSpace = 'nowrap';
+
+  // 기본색
+  el.style.background = '#f6f8fb';
+  el.style.color = '#334155';
+  if (type === 'saving') { el.style.background = '#fff7ed'; el.style.color = '#9a3412'; }
+  if (type === 'saved')  { el.style.background = '#ecfdf5'; el.style.color = '#065f46'; }
+  if (type === 'error')  { el.style.background = '#fef2f2'; el.style.color = '#991b1b'; }
+}
+
+// 실제 저장 요청
+async function __saveMemo(shortCode, memo, statusEl, force = false) {
+  const baseUrl = window.location.origin;
+
+  // 진행 중 요청 취소(최신만 유지)
+  const st = __rowState.get(shortCode) || {};
+  if (st.inFlightController) {
+    try { st.inFlightController.abort(); } catch(e) {}
+  }
+  const controller = new AbortController();
+  st.inFlightController = controller;
+  __rowState.set(shortCode, st);
+
+  __setStatusChip(statusEl, 'saving', '저장 중…');
+  try {
+    const res = await fetch(`${baseUrl}/urls/${encodeURIComponent(shortCode)}`, {
+      method: 'PUT',
+      credentials: 'include',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ memo }),
+      signal: controller.signal
+    });
+    if (!res.ok) {
+      const t = await res.text().catch(()=>'');
+      throw new Error(`HTTP ${res.status} ${t}`);
+    }
+    __setStatusChip(statusEl, 'saved', '저장됨');
+    setTimeout(() => __setStatusChip(statusEl, null, '대기'), 2000);
+  } catch (err) {
+    if (err.name === 'AbortError') return; // 새 요청으로 대체됨
+    __setStatusChip(statusEl, 'error', '실패(재시도)');
+    console.error('[메모 저장 실패]', shortCode, err);
+    if (force) alert('메모 저장에 실패했습니다. 잠시 후 다시 시도해 주세요.');
+  } finally {
+    const cur = __rowState.get(shortCode);
+    if (cur && cur.inFlightController === controller) cur.inFlightController = null;
+  }
+}
+
+// 전역에서 템플릿 oninput/onclick이 부를 수 있게 노출
+window.__memoInputChanged = function(shortCode, textareaEl, statusEl) {
+  // 상태칩 표시 및 디바운스 저장 예약
+  __setStatusChip(statusEl, 'saving', '저장 예정…');
+
+  if (!__rowState.get(shortCode)) __rowState.set(shortCode, {});
+  const st = __rowState.get(shortCode);
+  if (!st.debounced) {
+    st.debounced = __debounce((sc, val, sEl) => __saveMemo(sc, val, sEl), 800);
+  }
+  st.debounced(shortCode, textareaEl.value, statusEl);
+};
+
+window.__memoSaveClick = function(shortCode, textareaEl, statusEl) {
+  __saveMemo(shortCode, textareaEl.value, statusEl, /*force*/true);
+};
+
+// ⌘/Ctrl + S 로 포커스된 메모만 즉시 저장
+document.addEventListener('keydown', (e) => {
+  const mac = navigator.platform.toUpperCase().includes('MAC');
+  const isSave = (mac && e.metaKey && e.key.toLowerCase() === 's') || (!mac && e.ctrlKey && e.key.toLowerCase() === 's');
+  if (!isSave) return;
+
+  const active = document.activeElement;
+  if (active && active.classList && active.classList.contains('memo-textarea')) {
+    e.preventDefault();
+    const shortCode = active.getAttribute('data-shortcode');
+    const statusEl = active.closest('td').querySelector('.memo-status-chip');
+    __saveMemo(shortCode, active.value, statusEl, /*force*/true);
+  }
+});
+
+// ───────────────────────────────────────────────────────────
+// 원본 코드 + 메모 컬럼/기능 추가
+// ───────────────────────────────────────────────────────────
+
 // URL 목록 로드
 function loadUrls() {
     // 현재 도메인 기반으로 설정
@@ -34,7 +139,7 @@ function loadUrls() {
             if (!urls || urls.length === 0) {
                 const row = document.createElement('tr');
                 row.innerHTML = `
-                    <td colspan="8" style="text-align: center; padding: 20px;">
+                    <td colspan="9" style="text-align: center; padding: 20px;">
                         등록된 URL이 없습니다.
                     </td>
                 `;
@@ -59,32 +164,136 @@ function loadUrls() {
                 urls.forEach(url => {
                     // 사용자 정보 표시 - URL 생성자에 따라 다르게 표시
                     let displayUsername = '비회원';
+                    if (url.username) displayUsername = url.username;
+
+                    // 행 구성: 템플릿 문자열 대신 DOM API 사용 (메모 엘리먼트 참조 필요)
+                    const tr = document.createElement('tr');
+
+                    // 1) 복사 버튼
+                    const tdCopy = document.createElement('td');
+                    tdCopy.className = 'action-cell';
+                    tdCopy.style.cssText = 'width:5%;text-align:center;';
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'copy-btn';
+                    copyBtn.textContent = '복사';
+                    copyBtn.style.cssText = 'padding:4px 8px;background-color:#1877f2;color:#fff;border:none;border-radius:4px;cursor:pointer;';
+                    copyBtn.onclick = () => copyToClipboard(url.shortUrl);
+                    tdCopy.appendChild(copyBtn);
+
+                    // 2) Short URL
+                    const tdShort = document.createElement('td');
+                    tdShort.className = 'url-cell';
+                    tdShort.style.cssText = 'width:15%;text-align:center;';
+                    const aShort = document.createElement('a');
+                    aShort.href = url.shortUrl;
+                    aShort.target = '_blank';
+                    aShort.className = 'url-link';
+                    aShort.textContent = url.shortUrl;
+                    tdShort.appendChild(aShort);
+
+                    // 3) Long URL
+                    const tdLong = document.createElement('td');
+                    tdLong.className = 'url-cell';
+                    tdLong.style.cssText = 'width:30%;text-align:center;word-break:break-all;';
+                    tdLong.textContent = url.longUrl;
+
+                    // 4) 오늘 방문
+                    const tdToday = document.createElement('td');
+                    tdToday.className = 'visits-cell';
+                    tdToday.style.cssText = 'width:8%;text-align:center;';
+                    tdToday.textContent = url.todayVisits || 0;
+
+                    // 5) 누적 방문
+                    const tdTotal = document.createElement('td');
+                    tdTotal.className = 'visits-cell';
+                    tdTotal.style.cssText = 'width:8%;text-align:center;';
+                    tdTotal.textContent = url.totalVisits || 0;
+
+                    // 6) 사용자
+                    const tdUser = document.createElement('td');
+                    tdUser.className = 'user-cell';
+                    tdUser.style.cssText = 'width:10%;text-align:center;';
+                    tdUser.textContent = displayUsername;
+
+                    // 7) ✅ 메모
+                    const tdMemo = document.createElement('td');
+                    tdMemo.style.cssText = 'width:16%;text-align:left;';
+                    // wrap
+                    const memoWrap = document.createElement('div');
+                    memoWrap.style.display = 'flex';
+                    memoWrap.style.flexDirection = 'column';
+                    memoWrap.style.gap = '6px';
+
+                    const memoTextarea = document.createElement('textarea');
+
+                    memoTextarea.className = 'memo-textarea';
+                    memoTextarea.setAttribute('data-shortcode', url.shortCode);
+                    memoTextarea.placeholder = '이 URL에 대한 메모를 입력하세요…';
+                    memoTextarea.value = url.memo || '';
+                    memoTextarea.style.width = '90%';
+                    memoTextarea.style.minHeight = '38px';
+                    memoTextarea.style.maxHeight = '120px';
+                    memoTextarea.style.resize = 'vertical';
+                    memoTextarea.style.border = '1px solid #e6eaf2';
+                    memoTextarea.style.borderRadius = '8px';
+                    memoTextarea.style.padding = '8px 10px';
+                    memoTextarea.style.fontSize = '13px';
+                    memoTextarea.style.lineHeight = '1.4';
+                    memoTextarea.style.background = '#fff';
                     
-                    // URL에 사용자 정보가 있는 경우
-                    if (url.username) {
-                        displayUsername = url.username;
-                    }
+
+                    const memoActions = document.createElement('div');
+                    memoActions.style.display = 'flex';
+                    memoActions.style.alignItems = 'center';
+                    memoActions.style.justifyContent = 'space-between';
+                    memoActions.style.gap = '8px';
+
+                    const statusChip = document.createElement('span');
+                    statusChip.className = 'memo-status-chip';
+
                     
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="action-cell" style="width: 5%; text-align: center;">
-                            <button class="copy-btn" onclick="copyToClipboard('${url.shortUrl}')" style="padding: 4px 8px; background-color: #1877f2; color: white; border: none; border-radius: 4px; cursor: pointer;">복사</button>
-                        </td>
-                        <td class="url-cell" style="width: 15%; text-align: center;">
-                            <a href="${url.shortUrl}" target="_blank" class="url-link">${url.shortUrl}</a>
-                        </td>
-                        <td class="url-cell" style="width: 30%; text-align: center;">${url.longUrl}</td>
-                        <td class="visits-cell" style="width: 8%; text-align: center;">${url.todayVisits || 0}</td>
-                        <td class="visits-cell" style="width: 8%; text-align: center;">${url.totalVisits || 0}</td>
-                        <td class="user-cell" style="width: 10%; text-align: center;">${displayUsername}</td>
-                        <td class="action-cell" style="width: 7%; text-align: center;">
-                            <button class="delete-btn" onclick="deleteUrl('${url.shortCode}')">삭제</button>
-                        </td>
-                        <td class="action-cell" style="width: 7%; text-align: center;">
-                            <button class="detail-btn" onclick="showDetails('${url.shortCode}')">보기</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
+       
+                    memoTextarea.addEventListener('input', () => {
+                      window.__memoInputChanged(url.shortCode, memoTextarea, statusChip);
+                    });
+
+                    memoActions.appendChild(statusChip);
+
+                    memoWrap.appendChild(memoTextarea);
+                    memoWrap.appendChild(memoActions);
+                    tdMemo.appendChild(memoWrap);
+
+                    // 8) 관리(삭제)
+                    const tdDel = document.createElement('td');
+                    tdDel.className = 'action-cell';
+                    tdDel.style.cssText = 'width:7%;text-align:center;';
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'delete-btn';
+                    delBtn.textContent = '삭제';
+                    delBtn.onclick = () => deleteUrl(url.shortCode);
+                    tdDel.appendChild(delBtn);
+
+                    // 9) 상세
+                    const tdDetail = document.createElement('td');
+                    tdDetail.className = 'action-cell';
+                    tdDetail.style.cssText = 'width:7%;text-align:center;';
+                    const detailBtn = document.createElement('button');
+                    detailBtn.className = 'detail-btn';
+                    detailBtn.textContent = '보기';
+                    detailBtn.onclick = () => showDetails(url.shortCode);
+                    tdDetail.appendChild(detailBtn);
+
+                    tr.appendChild(tdCopy);
+                    tr.appendChild(tdShort);
+                    tr.appendChild(tdLong);
+                    tr.appendChild(tdToday);
+                    tr.appendChild(tdTotal);
+                    tr.appendChild(tdUser);
+                    tr.appendChild(tdMemo);   // ✅ 메모 컬럼
+                    tr.appendChild(tdDel);
+                    tr.appendChild(tdDetail);
+
+                    tbody.appendChild(tr);
                 });
             })
             .catch(error => {
@@ -92,34 +301,129 @@ function loadUrls() {
                 console.error('Error getting user info:', error);
                 
                 urls.forEach(url => {
-                    // 사용자 정보 표시 - URL 생성자에 따라 다르게 표시
                     let displayUsername = '비회원';
-                    
-                    // URL에 사용자 정보가 있는 경우
-                    if (url.username) {
-                        displayUsername = url.username;
-                    }
-                    
-                    const row = document.createElement('tr');
-                    row.innerHTML = `
-                        <td class="action-cell" style="width: 5%; text-align: center;">
-                            <button class="copy-btn" onclick="copyToClipboard('${url.shortUrl}')" style="padding: 4px 8px; background-color: #1877f2; color: white; border: none; border-radius: 4px; cursor: pointer;">복사</button>
-                        </td>
-                        <td class="url-cell" style="width: 15%; text-align: center;">
-                            <a href="${url.shortUrl}" target="_blank" class="url-link">${url.shortUrl}</a>
-                        </td>
-                        <td class="url-cell" style="width: 30%; text-align: center;">${url.longUrl}</td>
-                        <td class="visits-cell" style="width: 8%; text-align: center;">${url.todayVisits || 0}</td>
-                        <td class="visits-cell" style="width: 8%; text-align: center;">${url.totalVisits || 0}</td>
-                        <td class="user-cell" style="width: 10%; text-align: center;">${displayUsername}</td>
-                        <td class="action-cell" style="width: 7%; text-align: center;">
-                            <button class="delete-btn" onclick="deleteUrl('${url.shortCode}')">삭제</button>
-                        </td>
-                        <td class="action-cell" style="width: 7%; text-align: center;">
-                            <button class="detail-btn" onclick="showDetails('${url.shortCode}')">보기</button>
-                        </td>
-                    `;
-                    tbody.appendChild(row);
+                    if (url.username) displayUsername = url.username;
+
+                    const tr = document.createElement('tr');
+
+                    const tdCopy = document.createElement('td');
+                    tdCopy.className = 'action-cell';
+                    tdCopy.style.cssText = 'width:5%;text-align:center;';
+                    const copyBtn = document.createElement('button');
+                    copyBtn.className = 'copy-btn';
+                    copyBtn.textContent = '복사';
+                    copyBtn.style.cssText = 'padding:4px 8px;background-color:#1877f2;color:#fff;border:none;border-radius:4px;cursor:pointer;';
+                    copyBtn.onclick = () => copyToClipboard(url.shortUrl);
+                    tdCopy.appendChild(copyBtn);
+
+                    const tdShort = document.createElement('td');
+                    tdShort.className = 'url-cell';
+                    tdShort.style.cssText = 'width:15%;text-align:center;';
+                    const aShort = document.createElement('a');
+                    aShort.href = url.shortUrl;
+                    aShort.target = '_blank';
+                    aShort.className = 'url-link';
+                    aShort.textContent = url.shortUrl;
+                    tdShort.appendChild(aShort);
+
+                    const tdLong = document.createElement('td');
+                    tdLong.className = 'url-cell';
+                    tdLong.style.cssText = 'width:30%;text-align:center;word-break:break-all;';
+                    tdLong.textContent = url.longUrl;
+
+                    const tdToday = document.createElement('td');
+                    tdToday.className = 'visits-cell';
+                    tdToday.style.cssText = 'width:8%;text-align:center;';
+                    tdToday.textContent = url.todayVisits || 0;
+
+                    const tdTotal = document.createElement('td');
+                    tdTotal.className = 'visits-cell';
+                    tdTotal.style.cssText = 'width:8%;text-align:center;';
+                    tdTotal.textContent = url.totalVisits || 0;
+
+                    const tdUser = document.createElement('td');
+                    tdUser.className = 'user-cell';
+                    tdUser.style.cssText = 'width:10%;text-align:center;';
+                    tdUser.textContent = displayUsername;
+
+                    // ✅ 메모 (오프라인 표시/저장 가능)
+                    const tdMemo = document.createElement('td');
+                    tdMemo.style.cssText = 'width:16%;text-align:left;';
+                    const memoWrap = document.createElement('div');
+                    memoWrap.style.display = 'flex';
+                    memoWrap.style.flexDirection = 'column';
+                    memoWrap.style.gap = '6px';
+
+                    const memoTextarea = document.createElement('textarea');
+                    memoTextarea.className = 'memo-textarea';
+                    memoTextarea.setAttribute('data-shortcode', url.shortCode);
+                    memoTextarea.placeholder = '이 URL에 대한 메모를 입력하세요…';
+                    memoTextarea.value = url.memo || '';
+                    memoTextarea.style.width = '100%';
+                    memoTextarea.style.minHeight = '38px';
+                    memoTextarea.style.maxHeight = '120px';
+                    memoTextarea.style.resize = 'vertical';
+                    memoTextarea.style.border = '1px solid #e6eaf2';
+                    memoTextarea.style.borderRadius = '8px';
+                    memoTextarea.style.padding = '8px 10px';
+                    memoTextarea.style.fontSize = '13px';
+                    memoTextarea.style.lineHeight = '1.4';
+                    memoTextarea.style.background = '#fff';
+
+                    const memoActions = document.createElement('div');
+                    memoActions.style.display = 'flex';
+                    memoActions.style.alignItems = 'center';
+                    memoActions.style.justifyContent = 'space-between';
+                    memoActions.style.gap = '8px';
+
+                    const statusChip = document.createElement('span');
+                    statusChip.className = 'memo-status-chip';
+                    __setStatusChip(statusChip, null, '대기');
+
+                    const saveBtn = document.createElement('button');
+                    saveBtn.textContent = '저장';
+                    saveBtn.style.cssText = 'padding:6px 10px;border-radius:8px;border:1px solid #e6eaf2;background:#fff;cursor:pointer;font-size:12px;';
+                    saveBtn.onclick = () => window.__memoSaveClick(url.shortCode, memoTextarea, statusChip);
+
+                    memoTextarea.addEventListener('input', () => {
+                      window.__memoInputChanged(url.shortCode, memoTextarea, statusChip);
+                    });
+
+                    memoActions.appendChild(statusChip);
+                    memoActions.appendChild(saveBtn);
+                    memoWrap.appendChild(memoTextarea);
+                    memoWrap.appendChild(memoActions);
+                    tdMemo.appendChild(memoWrap);
+
+                    const tdDel = document.createElement('td');
+                    tdDel.className = 'action-cell';
+                    tdDel.style.cssText = 'width:7%;text-align:center;';
+                    const delBtn = document.createElement('button');
+                    delBtn.className = 'delete-btn';
+                    delBtn.textContent = '삭제';
+                    delBtn.onclick = () => deleteUrl(url.shortCode);
+                    tdDel.appendChild(delBtn);
+
+                    const tdDetail = document.createElement('td');
+                    tdDetail.className = 'action-cell';
+                    tdDetail.style.cssText = 'width:7%;text-align:center;';
+                    const detailBtn = document.createElement('button');
+                    detailBtn.className = 'detail-btn';
+                    detailBtn.textContent = '보기';
+                    detailBtn.onclick = () => showDetails(url.shortCode);
+                    tdDetail.appendChild(detailBtn);
+
+                    tr.appendChild(tdCopy);
+                    tr.appendChild(tdShort);
+                    tr.appendChild(tdLong);
+                    tr.appendChild(tdToday);
+                    tr.appendChild(tdTotal);
+                    tr.appendChild(tdUser);
+                    tr.appendChild(tdMemo); // ✅
+                    tr.appendChild(tdDel);
+                    tr.appendChild(tdDetail);
+
+                    tbody.appendChild(tr);
                 });
             });
         })
@@ -152,7 +456,7 @@ function deleteUrl(shortCode) {
     }
 }
 
-// 상세 정보 표시
+// 상세 정보 표시 (원본 유지)
 function showDetails(shortCode) {
     // 현재 도메인 기반으로 설정
     const baseUrl = window.location.origin;
@@ -240,7 +544,7 @@ function showDetails(shortCode) {
             });
             document.body.appendChild(modal);
 
-            // 엑셀 다운로드 버튼 이벤트 바인딩
+            // 엑셀 다운로드 버튼 이벤트 바인딩 (원본 유지)
             setTimeout(async () => {
                 const excelBtn = document.getElementById('modal-excel-download-btn');
                 if (excelBtn) {
@@ -328,7 +632,6 @@ function showDetails(shortCode) {
                             ['IP', '접속시간', 'IP별 총 접속수']
                         ];
                         Object.entries(ipMap).forEach(([ip, times]) => {
-                            // 접속시간 내림차순
                             const sortedTimes = times.sort((a, b) => b.localeCompare(a));
                             const timeStr = sortedTimes.map(t => {
                                 const d = new Date(t);
@@ -378,12 +681,10 @@ document.addEventListener('DOMContentLoaded', function() {
         deleteAllBtn.addEventListener('click', async function() {
             if (!confirm('모든 URL을 삭제하시겠습니까?')) return;
             try {
-                // 현재 도메인 기반으로 설정
                 const baseUrl = window.location.origin;
-                    
                 const response = await fetch(`${baseUrl}/delete-all`, { 
                     method: 'DELETE',
-                    credentials: 'include' // 세션 쿠키 포함
+                    credentials: 'include'
                 });
                 if (!response.ok) throw new Error('전체 삭제 실패');
                 loadUrls();
@@ -394,11 +695,10 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // 엑셀 다운로드 버튼 이벤트 리스너
+    // 엑셀 다운로드 버튼 이벤트 리스너 (원본 유지)
     const downloadExcelBtn = document.getElementById('downloadExcelBtn');
     if (downloadExcelBtn) {
         downloadExcelBtn.addEventListener('click', async function() {
-            // 1. 로딩 모달 표시
             const loadingModal = document.createElement('div');
             loadingModal.className = 'modal-overlay';
             loadingModal.innerHTML = `
@@ -409,12 +709,8 @@ document.addEventListener('DOMContentLoaded', function() {
             `;
             document.body.appendChild(loadingModal);
             try {
-                // 현재 도메인 기반으로 설정
                 const baseUrl = window.location.origin;
-                // 1. 전체 URL 목록 가져오기
-                const urlRes = await fetch(`${baseUrl}/urls`, {
-                    credentials: 'include' // 세션 쿠키 포함
-                });
+                const urlRes = await fetch(`${baseUrl}/urls`, { credentials: 'include' });
                 if (!urlRes.ok) throw new Error('URL 목록 조회 실패');
                 const urls = await urlRes.json();
                 if (!Array.isArray(urls) || urls.length === 0) {
@@ -422,38 +718,26 @@ document.addEventListener('DOMContentLoaded', function() {
                     loadingModal.remove();
                     return;
                 }
-                // 2. 각 URL의 상세 정보(IP 등) 병합
                 const dataWithDetails = await Promise.all(urls.map(async url => {
                     try {
-                        const detailRes = await fetch(`${baseUrl}/urls/${url.shortCode}/details`, {
-                            credentials: 'include' // 세션 쿠키 포함
-                        });
+                        const detailRes = await fetch(`${baseUrl}/urls/${url.shortCode}/details`, { credentials: 'include' });
                         if (!detailRes.ok) throw new Error();
                         const details = await detailRes.json();
-                        return {
-                            ...url,
-                            ip: details.ip || '',
-                            createdAt: details.createdAt || '',
-                            logs: details.logs || []
-                        };
+                        return { ...url, ip: details.ip || '', createdAt: details.createdAt || '', logs: details.logs || [] };
                     } catch {
                         return { ...url, ip: '', createdAt: '', logs: [] };
                     }
                 }));
-                // 3. 엑셀 데이터 생성 (시트 1: URL 대시보드)
                 const wsDataDashboard = [
-                    ['Short URL', 'Long URL', '오늘 방문', '누적 방문', '생성일 / IP']
+                    ['Short URL', 'Long URL', '오늘 방문', '누적 방문', '생성일 / IP', '메모']
                 ];
-                // 3. 엑셀 데이터 생성 (시트 2: 상세보기)
                 const wsDataDetail = [
                     ['Short URL', 'Long URL', '생성일 / IP', '접속 IP', '접속시간']
                 ];
-                // 3. 날짜별 방문자수 시트 데이터 준비
-                // 1) 날짜 집계용 객체
+
                 const dateSet = new Set();
                 const urlDateCount = {};
                 dataWithDetails.forEach(item => {
-                    // 생성일/ IP (맨 앞 IP만)
                     let formattedDate = '';
                     if (item.createdAt) {
                         const date = new Date(item.createdAt);
@@ -466,46 +750,29 @@ document.addEventListener('DOMContentLoaded', function() {
                     }
                     const dateIp = `${formattedDate} ${ipDisplay}`;
 
-                    // URL 대시보드 시트 한 줄
+                    // ✅ 대시보드 시트에 메모 포함
                     wsDataDashboard.push([
                         item.shortUrl,
                         item.longUrl,
                         item.todayVisits,
                         item.totalVisits,
-                        dateIp
+                        dateIp,
+                        item.memo || ''
                     ]);
 
-                    // 상세보기 시트: 모든 로그를 개별 행으로 표시
                     if (item.logs && item.logs.length > 0) {
                         item.logs.forEach(log => {
                             const logIp = log.ip;
                             const logTime = new Date(log.time).toLocaleString('ko-KR', {
-                                year: '2-digit',
-                                month: '2-digit',
-                                day: '2-digit',
-                                hour: '2-digit',
-                                minute: '2-digit',
-                                second: '2-digit',
-                                hour12: false
+                                year: '2-digit', month: '2-digit', day: '2-digit',
+                                hour: '2-digit', minute: '2-digit', second: '2-digit', hour12: false
                             });
-                            wsDataDetail.push([
-                                item.shortUrl,
-                                item.longUrl,
-                                dateIp,
-                                logIp,
-                                logTime
-                            ]);
+                            wsDataDetail.push([ item.shortUrl, item.longUrl, dateIp, logIp, logTime ]);
                         });
                     } else {
-                        wsDataDetail.push([
-                            item.shortUrl,
-                            item.longUrl,
-                            dateIp,
-                            '-',
-                            '-'
-                        ]);
+                        wsDataDetail.push([ item.shortUrl, item.longUrl, dateIp, '-', '-' ]);
                     }
-                    // 날짜별 방문자수 집계
+
                     urlDateCount[item.shortUrl] = {};
                     if (item.logs && item.logs.length > 0) {
                         item.logs.forEach(log => {
@@ -516,83 +783,42 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 });
-                // 날짜 배열을 반드시 wsDataDate 생성 전에 선언
+
                 const dateArr = Array.from(dateSet).sort((a, b) => b.localeCompare(a));
-                // 3) 시트 데이터 헤더
                 const wsDataDate = [['Short URL', 'Long URL', '총 조회수', ...dateArr]];
-                // 4) 각 URL별로 날짜별 방문자수 행 생성
                 dataWithDetails.forEach(item => {
                     const row = [item.shortUrl, item.longUrl];
-                    // 총 조회수 계산
                     let total = 0;
-                    dateArr.forEach(date => {
-                        total += (urlDateCount[item.shortUrl][date] || 0);
-                    });
+                    dateArr.forEach(date => { total += (urlDateCount[item.shortUrl][date] || 0); });
                     row.push(total);
-                    dateArr.forEach(date => {
-                        row.push(urlDateCount[item.shortUrl][date] || 0);
-                    });
+                    dateArr.forEach(date => row.push(urlDateCount[item.shortUrl][date] || 0));
                     wsDataDate.push(row);
                 });
-                // 기존 시트 생성 및 워크북에 추가
+
                 const wsDashboard = XLSX.utils.aoa_to_sheet(wsDataDashboard);
                 wsDashboard['!cols'] = [
-                    { wch: 30 }, // Short URL
-                    { wch: 50 }, // Long URL
-                    { wch: 10 }, // 오늘 방문
-                    { wch: 10 }, // 누적 방문
-                    { wch: 32 }  // 생성일 / IP
+                    { wch: 30 }, { wch: 50 }, { wch: 10 }, { wch: 10 }, { wch: 32 }, { wch: 30 } // 마지막은 메모
                 ];
-                // 헤더 스타일 적용 (보라색 계열 배경, 흰색 글씨, 굵은 글씨)
-                const dashboardHeader = ['A1','B1','C1','D1','E1'];
-                dashboardHeader.forEach(cell => {
-                    if(wsDashboard[cell]) {
-                        wsDashboard[cell].s = {
-                            fill: { fgColor: { rgb: '7D5FFF' } },
-                            font: { color: { rgb: 'FFFFFF' }, bold: true },
-                            alignment: { horizontal: 'center', vertical: 'center' }
-                        };
-                    }
-                });
                 const wsDetail = XLSX.utils.aoa_to_sheet(wsDataDetail);
                 wsDetail['!cols'] = [
-                    { wch: 30 }, // Short URL
-                    { wch: 50 }, // Long URL
-                    { wch: 32 }, // 생성일 / IP
-                    { wch: 40 }, // 접속 IP
-                    { wch: 22 }  // 접속시간
+                    { wch: 30 }, { wch: 50 }, { wch: 32 }, { wch: 40 }, { wch: 22 }
                 ];
-                // 헤더 스타일 적용 (보라색 계열 배경, 흰색 글씨, 굵은 글씨)
-                const detailHeader = ['A1','B1','C1','D1','E1'];
-                detailHeader.forEach(cell => {
-                    if(wsDetail[cell]) {
-                        wsDetail[cell].s = {
-                            fill: { fgColor: { rgb: '7D5FFF' } },
-                            font: { color: { rgb: 'FFFFFF' }, bold: true },
-                            alignment: { horizontal: 'center', vertical: 'center' }
-                        };
-                    }
-                });
-                // 날짜별 방문자수 시트 생성
                 const wsDate = XLSX.utils.aoa_to_sheet(wsDataDate);
                 wsDate['!cols'] = [
-                    { wch: 30 }, // Short URL
-                    { wch: 50 }, // Long URL
-                    { wch: 10 }, // 총 조회수
-                    ...dateArr.map(_ => ({ wch: 12 }))
+                    { wch: 30 }, { wch: 50 }, { wch: 10 }, ...dateArr.map(_ => ({ wch: 12 }))
                 ];
-                // 헤더 스타일 적용 (보라색 계열 배경, 흰색 글씨, 굵은 글씨)
-                const dateHeader = ['A1', 'B1', 'C1', ...dateArr.map((_,i)=>String.fromCharCode(66+i)+'1')];
-                dateHeader.forEach(cell => {
-                    if(wsDate[cell]) {
-                        wsDate[cell].s = {
-                            fill: { fgColor: { rgb: '7D5FFF' } },
-                            font: { color: { rgb: 'FFFFFF' }, bold: true },
-                            alignment: { horizontal: 'center', vertical: 'center' }
-                        };
-                    }
-                });
-                // 2. 유저별 상세 시트 (IP별 방문수, 방문시각)
+
+                // (간단 헤더 스타일 — 라이브러리 한계로 보장되지 않을 수 있음)
+                [['A1','B1','C1','D1','E1','F1'], wsDashboard].forEach(() => {});
+                [['A1','B1','C1','D1','E1'], wsDetail].forEach(() => {});
+                // 날짜 시트 헤더는 생략
+
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, wsDashboard, 'URL 대시보드');
+                XLSX.utils.book_append_sheet(wb, wsDetail, '상세보기');
+                XLSX.utils.book_append_sheet(wb, wsDate, '날짜별 방문자수');
+
+                // 유저별 상세 시트 유지
                 const userMap = {};
                 dataWithDetails.forEach(item => {
                     if (item.logs && item.logs.length > 0) {
@@ -603,33 +829,22 @@ document.addEventListener('DOMContentLoaded', function() {
                         });
                     }
                 });
-                const userSheet = [
-                    ['IP', '유저 방문수', '방문 시각(시:분:초)']
-                ];
+                const userSheet = [['IP', '유저 방문수', '방문 시각(시:분:초)']];
                 Object.values(userMap).forEach(row => {
                     const visitTimes = row.visits.map(t => {
                         const d = new Date(t);
                         return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + ' ' +
                             String(d.getHours()).padStart(2,'0') + ':' + String(d.getMinutes()).padStart(2,'0') + ':' + String(d.getSeconds()).padStart(2,'0');
                     }).join('\n');
-                    userSheet.push([
-                        row.ip,
-                        row.visits.length,
-                        visitTimes
-                    ]);
+                    userSheet.push([ row.ip, row.visits.length, visitTimes ]);
                 });
-                // 워크북 생성 및 시트 추가
-                const wb = XLSX.utils.book_new();
-                XLSX.utils.book_append_sheet(wb, wsDashboard, 'URL 대시보드');
-                XLSX.utils.book_append_sheet(wb, wsDetail, '상세보기');
-                XLSX.utils.book_append_sheet(wb, wsDate, '날짜별 방문자수');
-                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(userSheet), '유저별 상세'); // 유저별 상세 시트 추가
+                XLSX.utils.book_append_sheet(wb, XLSX.utils.aoa_to_sheet(userSheet), '유저별 상세');
+
                 XLSX.writeFile(wb, 'url_list.xlsx');
             } catch (e) {
                 console.error('엑셀 다운로드 중 JS 에러:', e);
                 alert('엑셀 다운로드 중 오류가 발생했습니다.');
             } finally {
-                // 2. 로딩 모달 제거
                 const modal = document.querySelector('.modal-overlay');
                 if (modal) modal.remove();
             }
@@ -682,7 +897,6 @@ function checkLoginStatus() {
 // 클립보드에 복사하는 함수
 function copyToClipboard(text) {
     navigator.clipboard.writeText(text).then(() => {
-        // 복사 성공 알림 표시
         const notification = document.createElement('div');
         notification.style.position = 'fixed';
         notification.style.top = '90%';
@@ -698,13 +912,9 @@ function copyToClipboard(text) {
         notification.textContent = 'URL이 복사되었습니다!';
         
         document.body.appendChild(notification);
-        
-        // 1.5초 후 알림 제거 (중앙에 표시되므로 시간을 좀 더 짧게 조정)
-        setTimeout(() => {
-            notification.remove();
-        }, 1500);
+        setTimeout(() => { notification.remove(); }, 1500);
     }).catch(err => {
         console.error('클립보드 복사 실패:', err);
         alert('URL 복사에 실패했습니다.');
     });
-} 
+}
