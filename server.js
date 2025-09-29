@@ -40,7 +40,7 @@ for (const dir of [DATA_DIR, SESSIONS_DIR, BACKUPS_DIR]) {
  *  ========================= */
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? ['https://hwaseon-url.onrender.com', 'https://hwaseon-url.com']
+    ? ['https://amos-url.onrender.com', 'https://amos-url.com']
     : ['http://localhost:5001'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -318,7 +318,7 @@ app.delete('/api/users/:userId', (req, res) => {
  *  URL 단축/조회/삭제
  *  ========================= */
 const BASE_URL = process.env.NODE_ENV === 'production'
-  ? (process.env.DOMAIN || 'https://hwaseon-url.com')
+  ? (process.env.DOMAIN || 'https://amos-url.com')
   : `http://localhost:${PORT}`;
 
 app.get('/urls', (req, res) => {
