@@ -1,16 +1,3 @@
-<<<<<<< HEAD
-/* Dashboard 전용 스타일 */
-.dashboard-container {
-  max-width: 1200px;
-  margin: 40px auto;
-  background: #fff;
-  border-radius: 14px;
-  box-shadow: 0 8px 20px rgba(0,0,0,0.08);
-  padding: 40px;
-}
-
-/* 헤더 스타일 */
-=======
 /* ========== Layout ========== */
 .dashboard-container {
   max-width: 1200px;
@@ -22,7 +9,6 @@
 }
 
 /* ========== Header ========== */
->>>>>>> 211377a (init: import amos_url as standalone repo)
 .dashboard-header {
   display: flex;
   align-items: center;
@@ -34,34 +20,12 @@
 
 .header-icon {
   font-size: 28px;
-<<<<<<< HEAD
-  color: #000000;
-=======
   color: #000;
->>>>>>> 211377a (init: import amos_url as standalone repo)
 }
 
 .header-text {
   font-size: 28px;
   font-weight: bold;
-<<<<<<< HEAD
-  color: #000000;
-}
-
-.header-subtitle {
-  color: #666;
-  font-size: 18px;
-  margin-left: 12px;
-  cursor: pointer;
-  transition: color 0.2s;
-}
-
-.header-subtitle:hover {
-  color: #000000;
-}
-
-/* 정보 카드 스타일 */
-=======
   color: #000;
 }
 
@@ -75,7 +39,6 @@
 .header-subtitle:hover { color: #000; }
 
 /* ========== Info Card ========== */
->>>>>>> 211377a (init: import amos_url as standalone repo)
 .dashboard-info {
   display: flex;
   gap: 40px;
@@ -84,56 +47,21 @@
   background: #f8faff;
   border-radius: 10px;
 }
-<<<<<<< HEAD
-
-.info-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-  padding: 10px;
-  background: white;
-=======
 .info-item {
   flex-direction: column;
   gap: 8px;
   padding: 10px;
   background: #fff;
->>>>>>> 211377a (init: import amos_url as standalone repo)
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0,0,0,0.05);
   transition: transform 0.2s;
 }
-<<<<<<< HEAD
-
-.info-item:hover {
-  transform: translateY(-2px);
-}
-
-.info-label {
-  color: #000000;
-  font-weight: bold;
-  font-size: 16px;
-}
-
-.info-value {
-  font-size: 18px;
-  color: #333;
-}
-
-.level-date {
-  color: #000000;
-  font-weight: 500;
-}
-
-/* 테이블 스타일 */
-=======
 .info-item:hover { transform: translateY(-2px); }
 .info-label { font-size: 16px; font-weight: bold; color: #000; }
 .info-value { font-size: 18px; color: #333; }
 .level-date { font-weight: 500; color: #000; }
 
 /* ========== Table ========== */
->>>>>>> 211377a (init: import amos_url as standalone repo)
 .dashboard-table-wrap {
   margin-top: 24px;
   overflow-x: auto;
@@ -144,40 +72,6 @@
 
 .dashboard-table {
   width: 100%;
-<<<<<<< HEAD
-  border-collapse: collapse;
-  background: #f8faff;
-  border-radius: 10px;
-  overflow: hidden;
-  font-size: 15px;
-  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-  table-layout: fixed;
-}
-
-.dashboard-table thead tr {
-  background: #000000;
-  color: #fff;
-}
-
-.dashboard-table th {
-  background: #000000;
-  color: #fff;
-  font-weight: 500;
-  text-align: center;
-  padding: 16px 8px;
-}
-
-.dashboard-table td {
-  padding: 16px 8px;
-  text-align: center;
-  vertical-align: middle;
-}
-
-.dashboard-table tr:hover {
-  background-color: #f8f9fa;
-}
-
-=======
   table-layout: fixed;
   border-collapse: collapse;
   font-size: 15px;
@@ -189,63 +83,16 @@
   padding: 16px 8px;
   text-align: center;
 }
->>>>>>> 211377a (init: import amos_url as standalone repo)
 .dashboard-table td:nth-child(3) {
   white-space: normal;
   word-break: break-all;
 }
-<<<<<<< HEAD
-
-.dashboard-table .star-cell {
-  width: 5%;
-  text-align: center;
-}
-
-.dashboard-table .url-cell {
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-  text-align: center;
-}
-
-.dashboard-table .visits-cell {
-  text-align: center;
-}
-
-.dashboard-table .user-cell {
-  text-align: center !important;
-  vertical-align: middle;
-}
-
-.dashboard-table .action-cell {
-  text-align: center;
-  padding: 13px 8px !important;
-}
-
-/* 버튼 스타일 */
-.dashboard-table .edit-btn {
-  background: #e3e8f0;
-  color: #000000;
-  border: none;
-  border-radius: 5px;
-  padding: 8px 16px;
-  cursor: pointer;
-  font-size: 14px;
-  margin-right: 8px;
-  transition: all 0.2s;
-}
-
-.dashboard-table .delete-btn {
-  background: #dc3545;
-  color: white;
-=======
 .dashboard-table tr:hover { background: #f8f9fa; }
 
 /* Action Buttons */
 .dashboard-table .edit-btn,
 .dashboard-table .delete-btn,
 .dashboard-table .detail-btn {
->>>>>>> 211377a (init: import amos_url as standalone repo)
   border: none;
   border-radius: 5px;
   padding: 8px 16px;
@@ -253,26 +100,6 @@
   font-size: 14px;
   transition: all 0.2s;
 }
-<<<<<<< HEAD
-
-
-.dashboard-table .edit-btn:hover, .dashboard-table .delete-btn :hover {
-  transform: translateY(-1px);
-}
-
-.dashboard-table .edit-btn:hover {
-  background: #d0d8e8;
-}
-
-.dashboard-table .delete-btn:hover {
-  background: #c82333;
-}
-
-/* 별표 스타일 */
-.dashboard-table .star {
-  color: #ffb300;
-  font-size: 18px;
-=======
 .edit-btn { background: #e3e8f0; color: #000; }
 .edit-btn:hover { background: #d0d8e8; transform: translateY(-1px); }
 .delete-btn { background: #dc3545; color: #fff; }
@@ -292,396 +119,10 @@
 .star {
   font-size: 18px;
   color: #ffb300;
->>>>>>> 211377a (init: import amos_url as standalone repo)
   cursor: pointer;
   margin-right: 4px;
   transition: transform 0.2s;
 }
-<<<<<<< HEAD
-
-.dashboard-table .star:hover {
-  transform: scale(1.1);
-}
-
-.dashboard-table .star.inactive {
-  color: #e0e0e0;
-}
-
-/* 링크 스타일 */
-.dashboard-table .url-link {
-  color: #000000;
-  text-decoration: none;
-  cursor: pointer;
-  word-break: break-all;
-  transition: all 0.2s;
-}
-
-
-.dashboard-table .url-link:hover {
-  color: #000000;
-  text-decoration: underline;
-}
-
-/* 반응형 디자인 */
-@media (max-width: 1200px) {
-  .dashboard-container {
-    margin: 20px;
-    padding: 20px;
-  }
-  
-  .dashboard-info {
-    flex-wrap: wrap;
-    gap: 20px;
-  }
-  
-  .info-item {
-    flex: 1 1 calc(50% - 20px);
-    min-width: 200px;
-  }
-}
-
-@media (max-width: 768px) {
-  .dashboard-header {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
-  }
-  
-  .header-text {
-    font-size: 24px;
-  }
-  
-  .dashboard-info {
-    flex-direction: column;
-  }
-  
-  .info-item {
-    width: 100%;
-  }
-  
-  .dashboard-table {
-    font-size: 14px;
-  }
-  
-  .dashboard-table th, 
-  .dashboard-table td {
-    padding: 12px 8px;
-  }
-  
-  .dashboard-table .edit-btn,
-  .dashboard-table .delete-btn {
-    padding: 6px 12px;
-    font-size: 12px;
-  }
-}
-
-/* 애니메이션 효과 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
-}
-
-.dashboard-table tbody tr {
-  animation: fadeIn 0.3s ease-out;
-}
-
-/* URL 추가 시 애니메이션 */
-@keyframes slideIn {
-  from {
-    opacity: 0;
-    transform: translateX(-20px);
-  }
-  to {
-    opacity: 1;
-    transform: translateX(0);
-  }
-}
-
-.dashboard-table tbody tr.new-row {
-  animation: slideIn 0.3s ease-out;
-}
-
-.copy-notification {
-    position: fixed;
-    bottom: 20px;
-    left: 50%;
-    transform: translateX(-50%);
-    background-color: #000000;
-    color: white;
-    padding: 12px 24px;
-    border-radius: 8px;
-    font-size: 14px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.2);
-    animation: slideUp 0.3s ease-out;
-    z-index: 1000;
-}
-
-@keyframes slideUp {
-    from {
-        opacity: 0;
-        transform: translate(-50%, 20px);
-    }
-    to {
-        opacity: 1;
-        transform: translate(-50%, 0);
-    }
-}
-
-.detail-row {
-    background-color: #f8faff;
-}
-
-.detail-content {
-    padding: 20px !important;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 15px;
-    background: white;
-    padding: 20px;
-    border-radius: 8px;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.detail-item {
-    padding: 10px;
-    border-bottom: 1px solid #eee;
-}
-
-.detail-item:last-child {
-    border-bottom: none;
-}
-
-.detail-item strong {
-    color: #000000;
-    margin-right: 8px;
-}
-
-.dashboard-table .detail-btn {
-    background: #4CAF50;
-    color: white;
-    border: none;
-    border-radius: 5px;
-  padding: 8px 16px;
-    cursor: pointer;
-    font-size: 14px;
-  transition: all 0.2s;
-}
-
-.dashboard-table .detail-btn:hover {
-    background: #45a049;
-}
-
-.modal-overlay {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100%;
-    height: 100%;
-    background: rgba(0, 0, 0, 0.5);
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    z-index: 1000;
-}
-
-.modal-content {
-    background: white;
-    border-radius: 12px;
-    padding: 24px;
-    width: 100%;
-    max-width: 600px;
-    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-}
-
-.modal-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 20px;
-    padding-bottom: 12px;
-    border-bottom: 1px solid #eee;
-}
-
-.modal-title {
-    font-size: 20px;
-    font-weight: bold;
-    color: #000000;
-}
-
-.modal-close {
-    background: none;
-    border: none;
-    font-size: 24px;
-    cursor: pointer;
-    color: #666;
-}
-
-.detail-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 12px;
-}
-
-.detail-item {
-    display: flex;
-    padding: 16px;
-    background: #f8faff;
-    border-radius: 8px;
-    align-items: center;
-}
-
-.detail-label {
-    width: 140px;
-    color: #666;
-    font-size: 15px;
-}
-
-.detail-value {
-    flex: 1;
-    font-size: 15px;
-    font-weight: 500;
-}
-
-.detail-value.highlight {
-    color: #000000;
-    font-weight: bold;
-}
-
-.return-home {
-    margin-left: auto;
-    padding: 8px 16px;
-    background: #e3e8f0;
-    color: #000000;
-    text-decoration: none;
-    border-radius: 6px;
-    font-size: 15px;
-    font-weight: 500;
-    transition: all 0.2s;
-}
-
-.return-home:hover {
-    background: #d0d8e8;
-    transform: translateY(-1px);
-}
-
-.refresh-btn {
-  margin-left: auto;
-  padding: 8px 16px;
-  background: #e3e8f0;
-  color: #000000;
-  border: none;
-  border-radius: 6px;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.refresh-btn:hover {
-  background: #d0d8e8;
-  transform: translateY(-1px);
-}
-
-.dashboard-actions {
-  margin: 1rem 0;
-  text-align: right;
-}
-
-.delete-all-btn {
-  padding: 0.5rem 1rem;
-  background-color: #e74c3c;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.delete-all-btn:hover {
-  background-color: #c0392b;
-}
-
-.download-excel-btn {
-  padding: 0.5rem 1rem;
-  background-color: #000000;
-  color: white;
-  border: none;
-  border-radius: 5px;
-  cursor: pointer;
-  margin-left: 10px;
-  transition: background-color 0.3s;
-}
-.download-excel-btn:hover {
-  background-color: #000000;
-}
-
-.dashboard-table td,
-.dashboard-table .visits-cell,
-.dashboard-table .logs-cell {
-  text-align: center;
-}
-
-/* 사용자 배지 스타일 통일 */
-.user-badge {
-  display: inline-block;
-  background-color: #000000;
-  color: white;
-  font-size: 13px;
-  padding: 4px 10px;
-  border-radius: 12px;
-  font-weight: 500;
-  min-width: 80px;
-  text-align: center;
-}
-
-.admin-page-btn {
-  background-color: #000000;
-  color: white;
-  border: none;
-  border-radius: 4px;
-  padding: 10px 16px;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-  margin-left: 10px;
-  transition: all 0.2s ease;
-}
-
-.admin-page-btn:hover {
-  background-color: #000000;
-  transform: translateY(-2px);
-  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
-}
-
-.logs-scroll {
-    max-height: 250px;
-    overflow-y: auto;
-    border: 1px solid #eee;
-    padding: 8px;
-    background: #fafbfc;
-    border-radius: 6px;
-}
-
-.user-list-scroll {
-  max-height: 350px;
-  overflow-y: auto;
-  background: #fff;
-  border-radius: 8px;
-}
-
-
-=======
 .star:hover { transform: scale(1.1); }
 .star.inactive { color: #e0e0e0; }
 
@@ -815,9 +256,6 @@
   animation: slideUp 0.3s ease-out;
   z-index: 1000;
 }
-
-
-
 @keyframes slideUp {
   from { opacity: 0; transform: translate(-50%,20px); }
   to   { opacity: 1; transform: translate(-50%,0); }
@@ -845,4 +283,3 @@
   .dashboard-table th, .dashboard-table td { padding: 12px 8px; }
   .edit-btn, .delete-btn, .detail-btn { padding: 6px 12px; font-size: 12px; }
 }
->>>>>>> 211377a (init: import amos_url as standalone repo)
