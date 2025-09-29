@@ -25,7 +25,7 @@ const BACKUPS_DIR = path.join(DATA_DIR, 'backups');
 /** =========================
  *  보안/관리자 설정 (환경변수 지원)
  *  ========================= */
-const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'hwaseon@00';
+const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD || 'amos@00';
 const ADMIN_KEY = process.env.ADMIN_KEY || 'hwaseon-admin-key';
 
 /** =========================
