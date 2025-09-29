@@ -201,7 +201,7 @@ app.get('/admin', (req, res) => {
 app.post('/api/admin/login', (req, res) => {
   const { password } = req.body || {};
   if (password !== ADMIN_PASSWORD) return res.status(401).json({ success: false, message: '비밀번호 불일치' });
-  const adminUser = { id: 'admin', username: 'hwaseonad', email: 'gt.min@hawseon.com', isAdmin: true };
+  const adminUser = { id: 'admin', username: '장혜승', email: 'gt.min@hawseon.com', isAdmin: true };
   req.session.user = adminUser;
   req.session.save(err => {
     if (err) return res.status(500).json({ success: false, message: '세션 저장 오류' });
